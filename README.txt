@@ -1,5 +1,8 @@
 Node-YAJL
 =========
+Artem S Vybornov <vybornov@gmail.com>
+Version 0.5.1, 28 Apr, 2011
+
 Fork of yajl-js originally developed by Nikhil Marathe
 
 Yajl-js
@@ -9,9 +12,6 @@ Version, 0.5, 31st Jan 2010
 
 yajl-js aims to be a complete binding to the Yajl (http://lloyd.github.com/yajl/) JSON parser by Lloyd Hilaiel.
 yajl is a SAX-style event-driven parser well suited to JavaScript programming style.
-
-Artem S Vybornov <vybornov@gmail.com>
-Version, 0.5.1, 25 Apr 2011
 
 == Current Status
 * Parser bindings [done]
