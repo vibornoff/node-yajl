@@ -43,12 +43,15 @@ originally developed by Nikhil Marathe and seems to be no longer maintained.
 ## Build & install
 
 Build:
+
     node-waf configure build
 
 Run test:
+
     node ./test.js
 
 Install
+
     npm install .
     -or-
     npm install yajl
@@ -65,6 +68,7 @@ Class `Handle` itself is a subclass of `events.EventEmitter`.
 
 Optional argument `opts` can be passed to constructor.
 When `opts` is ommited or `null`, these defaults are used:
+
     {
         allowComments         : false,
         dontValidateStrings   : false,
