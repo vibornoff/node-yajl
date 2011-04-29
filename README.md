@@ -128,5 +128,5 @@ Returns parsed JSON value.
 
 Modified BSD Lincense.
 
-See ('LICENSE' file)[http://github.com/vibornoff/node-yajl/blob/master/LICENSE]
+See ['LICENSE' file](http://github.com/vibornoff/node-yajl/blob/master/LICENSE)
 for details.
