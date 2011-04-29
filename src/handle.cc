@@ -222,7 +222,7 @@ namespace yajljs
         return 1;
     }
 
-    int OnNumber( void *ctx, const char *numberVal, unsigned int numberLen )
+    int OnNumber( void *ctx, const char *numberVal, size_t numberLen )
     {
         INIT_CB( ctx );
 
@@ -231,7 +231,7 @@ namespace yajljs
         return 1;
     }
 
-    int OnString( void *ctx, const unsigned char *stringVal, unsigned int stringLen )
+    int OnString( void *ctx, const unsigned char *stringVal, size_t stringLen )
     {
         INIT_CB( ctx );
         Local<Value> args[1] = { String::New( (char *)stringVal, stringLen ) };
@@ -246,7 +246,7 @@ namespace yajljs
         return 1;
     }
 
-    int OnMapKey( void *ctx, const unsigned char *key, unsigned int stringLen )
+    int OnMapKey( void *ctx, const unsigned char *key, size_t stringLen )
     {
         INIT_CB( ctx );
         Local<Value> args[1] = { String::New( (char *)key, stringLen ) };

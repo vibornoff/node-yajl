@@ -64,10 +64,10 @@ namespace yajljs
     int OnBoolean( void *ctx, int b );
     int OnInteger( void *ctx, long long b );
     int OnDouble( void *ctx, double b );
-    int OnNumber( void *ctx, const char *numberVal, unsigned int numberLen );
-    int OnString( void *ctx, const unsigned char *stringVal, unsigned int stringLen );
+    int OnNumber( void *ctx, const char *numberVal, size_t numberLen );
+    int OnString( void *ctx, const unsigned char *stringVal, size_t stringLen );
     int OnStartMap( void *ctx );
-    int OnMapKey( void *ctx, const unsigned char *key, unsigned int stringLen );
+    int OnMapKey( void *ctx, const unsigned char *key, size_t stringLen );
     int OnEndMap( void *ctx );
     int OnStartArray( void *ctx );
     int OnEndArray( void *ctx );
