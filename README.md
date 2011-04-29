@@ -8,8 +8,9 @@ YAJL into [Node.js](http://github.com/joyent/node) ecosystem. Main feature
 of this project is a stream JSON parser allowing you to parse data
 without explicitly delimitting data stream into valid-value chunks.
 
-Node-yajl is forked from [yajl-js](http://bitbucket.org/nikhilm/yajl-js)
-originally developed by Nikhil Marathe and seems to be no longer maintained.
+[Node-yajl](http://github.com/vibornoff/node-yajl) is forked from
+[yajl-js](http://bitbucket.org/nikhilm/yajl-js) originally developed
+by Nikhil Marathe and seems to be no longer maintained.
 
 ## Synopsis
 
@@ -33,8 +34,8 @@ h.on( 'double',     function (_) { console.debug(_)     });
 var data = [
     '{"some"',
     ':["JSON',
-    "],"data',
-    ":[-3.5]}'
+    '"],"data',
+    '":[-3.5]}'
 ];
 
 for ( var i in data ) {
@@ -56,7 +57,9 @@ Build and install manually:
     node ./test.js
     npm install .
 
-Note that this package requires 'libyajl' and its dev headers to be installed on target system.
+Note that this package requires C++ building environment and 'libyajl' at least
+of version 2 and its dev headers to be installed on target system.
+
 See [yajl homepage](http://lloyd.github.com/yajl/) for details about building and installing it.
 
 ## API
