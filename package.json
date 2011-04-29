@@ -1,10 +1,10 @@
 {
     "name"      :   "yajl",
-    "version"   :   "0.5.1",
+    "version"   :   "0.6.0",
     "description" : "Binding for libyajl",
-    "autor"     :   "Nikhil Marathe <nsm.nikhil@gmail.com>",
+    "autor"     :   "Artem S Vybornov <vybornov@gmail.com>",
     "contributors" : [
-        "Artem S Vybornov <vybornov@gmail.com>"
+        "Nikhil Marathe <nsm.nikhil@gmail.com>"
     ],
 
     "main"      : "./build/default/yajl.node",
@@ -12,5 +12,11 @@
     "scripts"   : {
         "install" : "node-waf configure build",
         "test"  : "node ./test.js"
+    },
+
+    "repository" : {
+        "type"  : "git",
+        "url"   : "git://github.com/vibornoff/node-yajl.git",
+        "web"   : "http://github.com/vibornoff/node-yajl"
     }
 }

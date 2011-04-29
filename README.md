@@ -60,7 +60,8 @@ Build and install manually:
 Note that this package requires C++ building environment and 'libyajl' at least
 of version 2 and its dev headers to be installed on target system.
 
-See [yajl homepage](http://lloyd.github.com/yajl/) for details about building and installing it.
+See [yajl homepage](http://lloyd.github.com/yajl/) for details about building
+and installing 'libyajl'.
 
 ## API
 
@@ -130,6 +131,5 @@ Returns parsed JSON value.
 ## License
 
 Modified BSD Lincense.
-
 See ['LICENSE' file](http://github.com/vibornoff/node-yajl/blob/master/LICENSE)
 for details.
