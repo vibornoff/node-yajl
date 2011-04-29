@@ -1,6 +1,6 @@
 {
     "name"      :   "yajl",
-    "version"   :   "0.6.0",
+    "version"   :   "0.6.1",
     "description" : "Binding for libyajl",
     "autor"     :   "Artem S Vybornov <vybornov@gmail.com>",
     "contributors" : [
