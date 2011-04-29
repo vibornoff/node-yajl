@@ -4,6 +4,7 @@
     "description" : "Binding for libyajl",
     "autor"     :   "Artem S Vybornov <vybornov@gmail.com>",
     "contributors" : [
+        "Lloyd Hilaiel <lloyd@hilaiel.com>",
         "Nikhil Marathe <nsm.nikhil@gmail.com>"
     ],
 
