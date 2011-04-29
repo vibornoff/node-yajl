@@ -69,6 +69,7 @@ namespace yajljs
 
         NODE_SET_PROTOTYPE_METHOD( t, "parse", Parse );
         NODE_SET_PROTOTYPE_METHOD( t, "completeParse", CompleteParse );
+        NODE_SET_PROTOTYPE_METHOD( t, "getBytesConsumed", GetBytesConsumed );
 
         target->Set( v8::String::NewSymbol( "Handle"), t->GetFunction() );
     }
@@ -79,19 +80,16 @@ namespace yajljs
 
         int opt = 0;
 
-        if( args.Length() < 1 || !args[0]->IsObject() )
+        if( args.Length() >= 1 && args[0]->IsObject() )
         {
-            return ThrowException( Exception::TypeError(
-                        String::New( "Argument 0 must be a yajl_parser_config like object" ) ) );
+            Local<Object> obj = args[0]->ToObject();
+
+            opt |= ( obj->Get( String::New( "allowComments" ) )->ToInteger()->Value()       ) ? yajl_allow_comments         : 0;
+            opt |= ( obj->Get( String::New( "dontValidateStrings" ) )->ToInteger()->Value() ) ? yajl_dont_validate_strings  : 0;
+            opt |= ( obj->Get( String::New( "allowTrailingGarbage" ) )->ToInteger()->Value()) ? yajl_allow_trailing_garbage : 0;
+            opt |= ( obj->Get( String::New( "allowMultipleValues" ) )->ToInteger()->Value() ) ? yajl_allow_multiple_values  : 0;
+            opt |= ( obj->Get( String::New( "allowPartialValues" ) )->ToInteger()->Value()  ) ? yajl_allow_partial_values   : 0;
         }
-
-        Local<Object> obj = args[0]->ToObject();
-
-        opt |= ( obj->Get( String::New( "allowComments" ) )->ToInteger()->Value()       ) ? yajl_allow_comments         : 0;
-        opt |= ( obj->Get( String::New( "dontValidateStrings" ) )->ToInteger()->Value() ) ? yajl_dont_validate_strings  : 0;
-        opt |= ( obj->Get( String::New( "allowTrailingGarbage" ) )->ToInteger()->Value()) ? yajl_allow_trailing_garbage : 0;
-        opt |= ( obj->Get( String::New( "allowMultipleValues" ) )->ToInteger()->Value() ) ? yajl_allow_multiple_values  : 0;
-        opt |= ( obj->Get( String::New( "allowPartialValues" ) )->ToInteger()->Value()  ) ? yajl_allow_partial_values   : 0;
 
         Handle *handle = new Handle( (yajl_option)opt );
         handle->Wrap( args.This() );
@@ -148,6 +146,16 @@ namespace yajljs
         yh->CompleteParse();
 
         return Null();
+    }
+
+    v8::Handle<Value> Handle::GetBytesConsumed( const Arguments& args )
+    {
+        HandleScope scope;
+
+        Handle *yh = Unwrap<Handle>( args.This() );
+        int b = yajl_get_bytes_consumed( yh->yc_handle );
+
+        return Integer::New(b);
     }
 
     int Handle::Parse( unsigned char* str, int len )

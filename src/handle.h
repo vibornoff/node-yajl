@@ -44,6 +44,7 @@ namespace yajljs
 
         static v8::Handle<v8::Value> Parse( const v8::Arguments& args );
         static v8::Handle<v8::Value> CompleteParse( const v8::Arguments& args );
+        static v8::Handle<v8::Value> GetBytesConsumed( const v8::Arguments& args );
 
       protected:
         static v8::Handle<v8::Value> New (const v8::Arguments& args);
