@@ -27,8 +27,8 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#ifndef YAJLJS_HANDLE_H
-#define YAJLJS_HANDLE_H
+#ifndef YAJLJS_HANDLE_HH
+#define YAJLJS_HANDLE_HH
 
 #include <v8.h>
 #include <node.h>

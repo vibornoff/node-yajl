@@ -30,8 +30,8 @@
 #include <v8.h>
 #include <node.h>
 
-#include "handle.h"
-#include "tree.h"
+#include "handle.hh"
+#include "tree.hh"
 
 extern "C" {
     void

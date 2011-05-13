@@ -14,8 +14,8 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef YAJLJS_TREE_H
-#define YAJLJS_TREE_H
+#ifndef YAJLJS_TREE_HH
+#define YAJLJS_TREE_HH
 
 #include <v8.h>
 #include <node.h>

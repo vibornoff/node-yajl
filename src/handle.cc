@@ -32,7 +32,7 @@
 #include <node/node_events.h>
 #include <yajl/yajl_parse.h>
 
-#include "handle.h"
+#include "handle.hh"
 
 using namespace v8;
 using namespace node;

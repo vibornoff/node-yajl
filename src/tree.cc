@@ -19,7 +19,7 @@
 #include <node/node_object_wrap.h>
 #include <yajl/yajl_tree.h>
 
-#include "tree.h"
+#include "tree.hh"
 
 using namespace v8;
 using namespace node;
