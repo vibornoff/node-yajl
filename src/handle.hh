@@ -35,42 +35,94 @@
 #include <node/node_events.h>
 #include <yajl/yajl_parse.h>
 
+#include <string>
+#include <map>
+
 namespace yajljs
 {
     class Handle : public node::EventEmitter
     {
       public:
-        static void Initialize ( v8::Handle<v8::Object> target );
+        static void Initialize( v8::Handle<v8::Object> target );
 
         static v8::Handle<v8::Value> Parse( const v8::Arguments& args );
-        static v8::Handle<v8::Value> CompleteParse( const v8::Arguments& args );
+        static v8::Handle<v8::Value> Complete( const v8::Arguments& args );
         static v8::Handle<v8::Value> GetBytesConsumed( const v8::Arguments& args );
-
+/*
+        static v8::Handle<v8::Value> AddListener(const v8::Arguments& args);
+        static v8::Handle<v8::Value> RemoveListener(const v8::Arguments& args);
+        static v8::Handle<v8::Value> RemoveAllListeners(const v8::Arguments& args);
+*/
       protected:
-        static v8::Handle<v8::Value> New (const v8::Arguments& args);
+        static v8::Handle<v8::Value> New( const v8::Arguments& args );
 
         Handle( yajl_option opt );
         ~Handle();
 
+        int Parse( const char*, size_t );
+        void Complete();
+
       private:
-        int Parse( unsigned char*, int );
-        void CompleteParse();
+        yajl_handle handle;
+/*
+        std::map<std::string,int*> listener_counters;
 
-        yajl_handle yc_handle;
-        yajl_callbacks callbacks;
+        int on_null_count;
+        int on_boolean_count;
+        int on_integer_count;
+        int on_double_count;
+        int on_number_count;
+        int on_string_count;
+        int on_startMap_count;
+        int on_mapKey_count;
+        int on_endMap_count;
+        int on_startArray_count;
+        int on_endArray_count;
+*/
+      private:
+        class EventName : public v8::String::ExternalAsciiStringResource
+        {
+          public:
+            EventName( const char * s );
+            EventName( const std::string& s );
+
+            void Dispose ();
+
+            const char* data() const;
+            size_t length() const;
+
+            operator const std::string& () const;
+
+          private:
+            std::string str;
+        };
+
+        static EventName NullEvent;
+        static EventName BooleanEvent;
+        static EventName IntegerEvent;
+        static EventName DoubleEvent;
+        static EventName NumberEvent;
+        static EventName StringEvent;
+        static EventName StartMapEvent;
+        static EventName MapKeyEvent;
+        static EventName EndMapEvent;
+        static EventName StartArrayEvent;
+        static EventName EndArrayEvent;
+
+        static int OnNull( void *ctx );
+        static int OnBoolean( void *ctx, int b );
+        static int OnInteger( void *ctx, long long b );
+        static int OnDouble( void *ctx, double b );
+        static int OnNumber( void *ctx, const char *numberVal, size_t numberLen );
+        static int OnString( void *ctx, const unsigned char *stringVal, size_t stringLen );
+        static int OnStartMap( void *ctx );
+        static int OnMapKey( void *ctx, const unsigned char *key, size_t stringLen );
+        static int OnEndMap( void *ctx );
+        static int OnStartArray( void *ctx );
+        static int OnEndArray( void *ctx );
+
+        static yajl_callbacks callbacks;
     };
-
-    int OnNull( void *ctx );
-    int OnBoolean( void *ctx, int b );
-    int OnInteger( void *ctx, long long b );
-    int OnDouble( void *ctx, double b );
-    int OnNumber( void *ctx, const char *numberVal, size_t numberLen );
-    int OnString( void *ctx, const unsigned char *stringVal, size_t stringLen );
-    int OnStartMap( void *ctx );
-    int OnMapKey( void *ctx, const unsigned char *key, size_t stringLen );
-    int OnEndMap( void *ctx );
-    int OnStartArray( void *ctx );
-    int OnEndArray( void *ctx );
 }
 
 #endif

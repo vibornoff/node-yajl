@@ -30,34 +30,56 @@
 #include <v8.h>
 #include <node.h>
 #include <node/node_events.h>
+#include <node/node_buffer.h>
 #include <yajl/yajl_parse.h>
+
+#include <string>
+#include <map>
 
 #include "handle.hh"
 
 using namespace v8;
 using namespace node;
+using namespace std;
 
 /*
- * Macro from the sqlite3 bindings
+ * Adapted macro from the sqlite3 bindings
  * http://github.com/grumdrig/node-sqlite/blob/master/sqlite3_bindings.cc
  * by Eric Fredricksen
  */
-#define REQ_STR_ARG(I, VAR)                                                         \
-    if( args.Length() <= (I) || !args[I]->IsString() )                              \
+#define REQ_STR_ARG(ARGS, I, VAR)                                                   \
+    if( (ARGS).Length() <= (I) || !(ARGS)[I]->IsString() )                          \
         return ThrowException(                                                      \
-            Exception::TypeError( String::New("Argument " #I " must be a string"))  \
+            Exception::TypeError( String::New("Argument " #I " must be a string") ) \
         );                                                                          \
-    String::Utf8Value VAR(args[I]->ToString());
+    String::Utf8Value VAR((ARGS)[I]);
 
 #define CONFIG_OPT(OPT, MASK) OPT, ( ( OPT & MASK ) && 1 )
 
-#define INIT_CB( ctx )                          \
-    HandleScope scope;                          \
-    Handle *yh = static_cast<Handle *>( ctx )
-
 namespace yajljs
 {
-    void Handle::Initialize ( v8::Handle<v8::Object> target )
+    /* Static members initialization */
+
+    yajl_callbacks Handle::callbacks = {
+        OnNull, OnBoolean, OnInteger, OnDouble, OnNumber, OnString,
+        OnStartMap, OnMapKey, OnEndMap, OnStartArray, OnEndArray
+    };
+
+    Handle::EventName Handle::NullEvent("null");
+    Handle::EventName Handle::BooleanEvent("boolean");
+    Handle::EventName Handle::IntegerEvent("integer");
+    Handle::EventName Handle::DoubleEvent("double");
+    Handle::EventName Handle::NumberEvent("number");
+    Handle::EventName Handle::StringEvent("string");
+    Handle::EventName Handle::StartMapEvent("startMap");
+    Handle::EventName Handle::MapKeyEvent("mapKey");
+    Handle::EventName Handle::EndMapEvent("endMap");
+    Handle::EventName Handle::StartArrayEvent("startArray");
+    Handle::EventName Handle::EndArrayEvent("endArray");
+
+    /* Library initialization */
+
+    void Handle::Initialize( v8::Handle<v8::Object> target )
     {
         v8::HandleScope scope;
 
@@ -68,13 +90,18 @@ namespace yajljs
         t->SetClassName(String::NewSymbol("Handle"));
 
         NODE_SET_PROTOTYPE_METHOD( t, "parse", Parse );
-        NODE_SET_PROTOTYPE_METHOD( t, "completeParse", CompleteParse );
+        NODE_SET_PROTOTYPE_METHOD( t, "completeParse", Complete );
         NODE_SET_PROTOTYPE_METHOD( t, "getBytesConsumed", GetBytesConsumed );
-
+/*
+        NODE_SET_PROTOTYPE_METHOD( t, "on", AddListener );
+        NODE_SET_PROTOTYPE_METHOD( t, "addListener", AddListener );
+        NODE_SET_PROTOTYPE_METHOD( t, "removeListener", RemoveListener );
+        NODE_SET_PROTOTYPE_METHOD( t, "removeAllListener", RemoveAllListeners );
+*/
         target->Set( v8::String::NewSymbol( "Handle"), t->GetFunction() );
     }
 
-    v8::Handle<v8::Value> Handle::New (const v8::Arguments& args)
+    v8::Handle<v8::Value> Handle::New( const v8::Arguments& args )
     {
         v8::HandleScope scope;
 
@@ -91,59 +118,73 @@ namespace yajljs
             opt |= ( obj->Get( String::New( "allowPartialValues" ) )->ToInteger()->Value()  ) ? yajl_allow_partial_values   : 0;
         }
 
-        Handle *handle = new Handle( (yajl_option)opt );
-        handle->Wrap( args.This() );
+        Handle *self = new Handle( (yajl_option)opt );
+        self->Wrap( args.This() );
 
         return args.This();
     }
 
     Handle::Handle( yajl_option opt ) : EventEmitter()
     {
-        callbacks.yajl_null = OnNull;
-        callbacks.yajl_boolean = OnBoolean;
-        callbacks.yajl_integer = OnInteger;
-        callbacks.yajl_double = OnDouble;
-        callbacks.yajl_number = OnNumber;
-        callbacks.yajl_string = OnString;
-        callbacks.yajl_start_map = OnStartMap;
-        callbacks.yajl_map_key = OnMapKey;
-        callbacks.yajl_end_map = OnEndMap;
-        callbacks.yajl_start_array = OnStartArray;
-        callbacks.yajl_end_array = OnEndArray;
-        
-        yc_handle = yajl_alloc( &callbacks, NULL, this );
+/*
+        listener_counters[NullEvent]    = &on_null_count;
+        listener_counters[BooleanEvent] = &on_boolean_count;
+        listener_counters[IntegerEvent] = &on_integer_count;
+        listener_counters[DoubleEvent]  = &on_double_count;
+        listener_counters[NumberEvent]  = &on_number_count;
+        listener_counters[StringEvent]  = &on_string_count;
+        listener_counters[StartMapEvent] = &on_startMap_count;
+        listener_counters[MapKeyEvent]  = &on_mapKey_count;
+        listener_counters[EndMapEvent]  = &on_endMap_count;
+        listener_counters[StartArrayEvent] = &on_startArray_count;
+        listener_counters[EndArrayEvent] = &on_endArray_count;
+*/
+        handle = yajl_alloc( &callbacks, NULL, this );
 
-        yajl_config( yc_handle, CONFIG_OPT(yajl_allow_comments,opt) );
-        yajl_config( yc_handle, CONFIG_OPT(yajl_dont_validate_strings,opt) );
-        yajl_config( yc_handle, CONFIG_OPT(yajl_allow_trailing_garbage,opt) );
-        yajl_config( yc_handle, CONFIG_OPT(yajl_allow_multiple_values,opt) );
-        yajl_config( yc_handle, CONFIG_OPT(yajl_allow_partial_values,opt) );
+        yajl_config( handle, CONFIG_OPT(yajl_allow_comments,opt) );
+        yajl_config( handle, CONFIG_OPT(yajl_dont_validate_strings,opt) );
+        yajl_config( handle, CONFIG_OPT(yajl_allow_trailing_garbage,opt) );
+        yajl_config( handle, CONFIG_OPT(yajl_allow_multiple_values,opt) );
+        yajl_config( handle, CONFIG_OPT(yajl_allow_partial_values,opt) );
     }
 
     Handle::~Handle()
     {
-        yajl_free( yc_handle );
-        yc_handle = NULL;
+        yajl_free( handle );
+        handle = NULL;
     }
 
     v8::Handle<Value> Handle::Parse( const Arguments& args )
     {
         HandleScope scope;
+        Handle *self = Unwrap<Handle>( args.This() );
 
-        REQ_STR_ARG(0, parseString);
+        if( args.Length() < 1 )
+            return ThrowException( Exception::TypeError( String::New("Argument required") ) );
 
-        Handle *yh = Unwrap<Handle>( args.This() );
-        int parsed = yh->Parse( const_cast<unsigned char*>( (unsigned char *) *parseString ), parseString.length() );
+        int parsed = 0;
+
+        if( Buffer::HasInstance(args[0]) ) {
+            Local<Object> b = args[0].As<Object>();
+            parsed = self->Parse( Buffer::Data(b), Buffer::Length(b) );
+        }
+        else if( args[0]->IsString() ) {
+            String::Utf8Value str(args[0]);
+            parsed = self->Parse( *str, str.length() );
+        }
+        else {
+            return ThrowException( Exception::TypeError( String::New("Argument must be a string or buffer") ) );
+        }
 
         return Integer::New(parsed);
     }
 
-    v8::Handle<Value> Handle::CompleteParse( const Arguments& args )
+    v8::Handle<Value> Handle::Complete( const Arguments& args )
     {
         HandleScope scope;
 
-        Handle *yh = Unwrap<Handle>( args.This() );
-        yh->CompleteParse();
+        Handle *self = Unwrap<Handle>( args.This() );
+        self->Complete();
 
         return Null();
     }
@@ -152,126 +193,259 @@ namespace yajljs
     {
         HandleScope scope;
 
-        Handle *yh = Unwrap<Handle>( args.This() );
-        int b = yajl_get_bytes_consumed( yh->yc_handle );
+        Handle *self = Unwrap<Handle>( args.This() );
+        int b = yajl_get_bytes_consumed( self->handle );
 
         return Integer::New(b);
     }
-
-    int Handle::Parse( unsigned char* str, int len )
+/*
+    v8::Handle<Value> Handle::AddListener( const Arguments& args )
     {
-        int status = yajl_parse( yc_handle, str, len );
+        HandleScope scope;
+
+        REQ_STR_ARG(args, 0, event);
+
+        Handle *self = Unwrap<Handle>( args.This() );
+        *((self->listener_counters)[*event])++;
+
+        Local<Value> add_listener = EventEmitter::constructor_template->PrototypeTemplate()
+                                    ->NewInstance()->Get( String::New("addListener") );
+
+        v8::Handle<Value> argv[] = { args[0], args[1] };
+        return add_listener.As<Function>()->Call( args.This(), 2, argv );
+    }
+
+    v8::Handle<Value> Handle::RemoveListener( const Arguments& args )
+    {
+        HandleScope scope;
+
+        REQ_STR_ARG(args, 0, event);
+
+        Handle *self = Unwrap<Handle>( args.This() );
+        *((self->listener_counters)[*event])--;
+
+        Local<Value> rm_listener = EventEmitter::constructor_template->PrototypeTemplate()
+                                    ->NewInstance()->Get( String::New("removeListener") );
+
+        v8::Handle<Value> argv[] = { args[0], args[1] };
+        return rm_listener.As<Function>()->Call( args.This(), 2, argv );
+    }
+
+    v8::Handle<Value> Handle::RemoveAllListeners( const Arguments& args )
+    {
+        HandleScope scope;
+
+        REQ_STR_ARG(args, 0, event);
+
+        Handle *self = Unwrap<Handle>( args.This() );
+        *((self->listener_counters)[*event]) = 0;
+
+        Local<Value> rm_listeners = EventEmitter::constructor_template->PrototypeTemplate()
+                                    ->NewInstance()->Get( String::New("removeAllListeners") );
+
+        v8::Handle<Value> argv[] = { args[0] };
+        return rm_listeners.As<Function>()->Call( args.This(), 1, argv );
+    }
+*/
+    int Handle::Parse( const char* str, size_t len )
+    {
+        int status = yajl_parse( handle, (const unsigned char*)str, len );
         if( status != yajl_status_ok )
         {
-            unsigned char *errorMsg = yajl_get_error( yc_handle, 1, str, len );
+            unsigned char *errorMsg = yajl_get_error( handle, 1, (const unsigned char*)str, len );
             Local<Value> args[1] = { String::New( (char *)errorMsg ) };
             Emit( String::New( "error" ), 1, args );
-            yajl_free_error( yc_handle, errorMsg );
+            yajl_free_error( handle, errorMsg );
         }
         
-        return (int)yajl_get_bytes_consumed( yc_handle );
+        return (int)yajl_get_bytes_consumed( handle );
     }
 
-    void Handle::CompleteParse()
+    void Handle::Complete()
     {
-        yajl_status status = yajl_complete_parse( yc_handle );
+        yajl_status status = yajl_complete_parse( handle );
         if( status != yajl_status_ok )
         {
-            unsigned char *errorMsg = yajl_get_error( yc_handle, 1, (unsigned char *)"", 0 );
+            unsigned char *errorMsg = yajl_get_error( handle, 1, (const unsigned char *)"", 0 );
             Local<Value> args[1] = { String::New( (char *)errorMsg ) };
             Emit( String::New( "error" ), 1, args );
-            yajl_free_error( yc_handle, errorMsg );
+            yajl_free_error( handle, errorMsg );
         }
     }
 
-    /**
-     * Callbacks
-     */
+    /* Callbacks */
 
-    int OnNull( void *ctx )
+    int Handle::OnNull( void *ctx )
     {
-        INIT_CB( ctx );
+        Handle *self = static_cast<Handle *>( ctx );
+/*
+        if( !self->on_null_count )
+            return 1;
+*/
         v8::Handle<Value> args[1] = { Null() };
-        yh->Emit( String::New("null"), 1, args );
+        self->Emit( String::NewExternal(&NullEvent), 1, args );
+
         return 1;
     }
 
-    int OnBoolean( void *ctx, int b )
+    int Handle::OnBoolean( void *ctx, int b )
     {
-        INIT_CB( ctx );
+        Handle *self = static_cast<Handle *>( ctx );
+/*
+        if( !self->on_boolean_count )
+            return 1;
+*/
         v8::Handle<Value> args[1] = { b ? True() : False() };
-        yh->Emit( String::New("boolean"), 1, args );
+        self->Emit( String::NewExternal(&BooleanEvent), 1, args );
+
         return 1;
     }
 
-    int OnInteger( void *ctx, long long b )
+    int Handle::OnInteger( void *ctx, long long b )
     {
-        INIT_CB( ctx );
-
+        Handle *self = static_cast<Handle *>( ctx );
+/*
+        if( !self->on_integer_count )
+            return 1;
+*/
         Local<Value> args[1] = { Integer::New( b ) };
-        yh->Emit( String::New("integer"), 1, args );
+        self->Emit( String::NewExternal(&IntegerEvent), 1, args );
+
         return 1;
     }
 
-    int OnDouble( void *ctx, double b )
+    int Handle::OnDouble( void *ctx, double b )
     {
-        INIT_CB( ctx );
-
+        Handle *self = static_cast<Handle *>( ctx );
+/*
+        if( !self->on_double_count )
+            return 1;
+*/
         Local<Value> args[1] = { Number::New( b ) };
-        yh->Emit( String::New("double"), 1, args );
+        self->Emit( String::NewExternal(&DoubleEvent), 1, args );
+
         return 1;
     }
 
-    int OnNumber( void *ctx, const char *numberVal, size_t numberLen )
+    int Handle::OnNumber( void *ctx, const char *numberVal, size_t numberLen )
     {
-        INIT_CB( ctx );
-
+        Handle *self = static_cast<Handle *>( ctx );
+/*
+        if( !self->on_number_count )
+            return 1;
+*/
         Local<Value> args[1] = { String::New( numberVal, numberLen ) };
-        yh->Emit( String::New("number"), 1, args );
+        self->Emit( String::NewExternal(&NumberEvent), 1, args );
+
         return 1;
     }
 
-    int OnString( void *ctx, const unsigned char *stringVal, size_t stringLen )
+    int Handle::OnString( void *ctx, const unsigned char *stringVal, size_t stringLen )
     {
-        INIT_CB( ctx );
+        Handle *self = static_cast<Handle *>( ctx );
+/*
+        if( !self->on_string_count )
+            return 1;
+*/
         Local<Value> args[1] = { String::New( (char *)stringVal, stringLen ) };
-        yh->Emit( String::New("string"), 1, args );
+        self->Emit( String::NewExternal(&StringEvent), 1, args );
+
         return 1;
     }
 
-    int OnStartMap( void *ctx )
+    int Handle::OnStartMap( void *ctx )
     {
-        INIT_CB( ctx );
-        yh->Emit( String::New("startMap"), 0, NULL );
+        Handle *self = static_cast<Handle *>( ctx );
+/*
+        if( !self->on_startMap_count )
+            return 1;
+*/
+        self->Emit( String::NewExternal(&StartMapEvent), 0, NULL );
+
         return 1;
     }
 
-    int OnMapKey( void *ctx, const unsigned char *key, size_t stringLen )
+    int Handle::OnMapKey( void *ctx, const unsigned char *key, size_t stringLen )
     {
-        INIT_CB( ctx );
+        Handle *self = static_cast<Handle *>( ctx );
+/*
+        if( !self->on_mapKey_count )
+            return 1;
+*/
         Local<Value> args[1] = { String::New( (char *)key, stringLen ) };
-        yh->Emit( String::New("mapKey"), 1, args );
+        self->Emit( String::NewExternal(&MapKeyEvent), 1, args );
+
         return 1;
     }
 
-    int OnEndMap( void *ctx )
+    int Handle::OnEndMap( void *ctx )
     {
-        INIT_CB( ctx );
-        yh->Emit( String::New("endMap"), 0, NULL );
+        Handle *self = static_cast<Handle *>( ctx );
+/*
+        if( !self->on_endMap_count )
+            return 1;
+*/
+        self->Emit( String::NewExternal(&EndMapEvent), 0, NULL );
+
         return 1;
     }
 
-    int OnStartArray( void *ctx )
+    int Handle::OnStartArray( void *ctx )
     {
-        INIT_CB( ctx );
-        yh->Emit( String::New("startArray"), 0, NULL );
+        Handle *self = static_cast<Handle *>( ctx );
+/*
+        if( !self->on_startArray_count )
+            return 1;
+*/
+        self->Emit( String::NewExternal(&StartArrayEvent), 0, NULL );
+
         return 1;
     }
 
-    int OnEndArray( void *ctx )
+    int Handle::OnEndArray( void *ctx )
     {
-        INIT_CB( ctx );
-        yh->Emit( String::New("endArray"), 0, NULL );
+        Handle *self = static_cast<Handle *>( ctx );
+/*
+        if( !self->on_endArray_count )
+            return 1;
+*/
+        self->Emit( String::NewExternal(&EndArrayEvent), 0, NULL );
+
         return 1;
     }
+
+    /* v8::String::ExternalAsciiStringResource wrapper around std::string */
+
+    Handle::EventName::EventName( const char* s )
+        : String::ExternalAsciiStringResource()
+    {
+        str = s;
+    }
+
+    Handle::EventName::EventName( const string& s )
+        : String::ExternalAsciiStringResource()
+    {
+        str = s;
+    }
+
+    void Handle::EventName::Dispose()
+    {
+        // do nothing
+    }
+
+    const char* Handle::EventName::data() const
+    {
+        return str.c_str();
+    }
+
+    size_t Handle::EventName::length() const
+    {
+        return str.length();
+    }
+
+    Handle::EventName::operator const string& () const
+    {
+        return str;
+    }
+
 }
