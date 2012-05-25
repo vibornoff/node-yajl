@@ -29,7 +29,7 @@
 
 #include <v8.h>
 #include <node.h>
-#include <node/node_events.h>
+#include <node/node_object_wrap.h>
 #include <node/node_buffer.h>
 #include <yajl/yajl_parse.h>
 
@@ -55,6 +55,8 @@ using namespace std;
     String::Utf8Value VAR((ARGS)[I]);
 
 #define CONFIG_OPT(OPT, MASK) OPT, ( ( OPT & MASK ) && 1 )
+
+static Persistent<String> emit_symbol;
 
 namespace yajljs
 {
@@ -85,7 +87,6 @@ namespace yajljs
 
         v8::Local<v8::FunctionTemplate> t = v8::FunctionTemplate::New(New);
 
-        t->Inherit( EventEmitter::constructor_template );
         t->InstanceTemplate()->SetInternalFieldCount(1);
         t->SetClassName(String::NewSymbol("Handle"));
 
@@ -98,6 +99,7 @@ namespace yajljs
         NODE_SET_PROTOTYPE_METHOD( t, "removeListener", RemoveListener );
         NODE_SET_PROTOTYPE_METHOD( t, "removeAllListener", RemoveAllListeners );
 */
+        emit_symbol = NODE_PSYMBOL("emit");
         target->Set( v8::String::NewSymbol( "Handle"), t->GetFunction() );
     }
 
@@ -124,7 +126,7 @@ namespace yajljs
         return args.This();
     }
 
-    Handle::Handle( yajl_option opt ) : EventEmitter()
+    Handle::Handle( yajl_option opt ) : ObjectWrap()
     {
 /*
         listener_counters[NullEvent]    = &on_null_count;
@@ -253,8 +255,9 @@ namespace yajljs
         if( status != yajl_status_ok )
         {
             unsigned char *errorMsg = yajl_get_error( handle, 1, (const unsigned char*)str, len );
-            Local<Value> args[1] = { String::New( (char *)errorMsg ) };
-            Emit( String::New( "error" ), 1, args );
+            Local<Value> args[2] = { String::New( "error" ),
+                                     String::New( (char *)errorMsg ) };
+            Emit( 2, args );
             yajl_free_error( handle, errorMsg );
         }
         
@@ -267,8 +270,9 @@ namespace yajljs
         if( status != yajl_status_ok )
         {
             unsigned char *errorMsg = yajl_get_error( handle, 1, (const unsigned char *)"", 0 );
-            Local<Value> args[1] = { String::New( (char *)errorMsg ) };
-            Emit( String::New( "error" ), 1, args );
+            Local<Value> args[2] = { String::New( "error" ),
+                                     String::New( (char *)errorMsg ) };
+            Emit( 2, args );
             yajl_free_error( handle, errorMsg );
         }
     }
@@ -282,8 +286,9 @@ namespace yajljs
         if( !self->on_null_count )
             return 1;
 */
-        v8::Handle<Value> args[1] = { Null() };
-        self->Emit( String::NewExternal(&NullEvent), 1, args );
+        v8::Handle<Value> args[2] = { String::NewExternal(&NullEvent),
+                                      Null() };
+        self->Emit( 2, args );
 
         return 1;
     }
@@ -295,8 +300,9 @@ namespace yajljs
         if( !self->on_boolean_count )
             return 1;
 */
-        v8::Handle<Value> args[1] = { b ? True() : False() };
-        self->Emit( String::NewExternal(&BooleanEvent), 1, args );
+        v8::Handle<Value> args[2] = { String::NewExternal(&BooleanEvent),
+                                      b ? True() : False() };
+        self->Emit( 2, args );
 
         return 1;
     }
@@ -308,8 +314,9 @@ namespace yajljs
         if( !self->on_integer_count )
             return 1;
 */
-        Local<Value> args[1] = { Integer::New( b ) };
-        self->Emit( String::NewExternal(&IntegerEvent), 1, args );
+        Local<Value> args[2] = { String::NewExternal(&IntegerEvent),
+                                 Integer::New( b ) };
+        self->Emit( 2, args );
 
         return 1;
     }
@@ -321,8 +328,9 @@ namespace yajljs
         if( !self->on_double_count )
             return 1;
 */
-        Local<Value> args[1] = { Number::New( b ) };
-        self->Emit( String::NewExternal(&DoubleEvent), 1, args );
+        Local<Value> args[2] = { String::NewExternal(&DoubleEvent),
+                                 Number::New( b ) };
+        self->Emit( 2, args );
 
         return 1;
     }
@@ -334,8 +342,9 @@ namespace yajljs
         if( !self->on_number_count )
             return 1;
 */
-        Local<Value> args[1] = { String::New( numberVal, numberLen ) };
-        self->Emit( String::NewExternal(&NumberEvent), 1, args );
+        Local<Value> args[2] = { String::NewExternal(&NumberEvent),
+                                 String::New( numberVal, numberLen ) };
+        self->Emit( 2, args );
 
         return 1;
     }
@@ -347,8 +356,9 @@ namespace yajljs
         if( !self->on_string_count )
             return 1;
 */
-        Local<Value> args[1] = { String::New( (char *)stringVal, stringLen ) };
-        self->Emit( String::NewExternal(&StringEvent), 1, args );
+        Local<Value> args[2] = { String::NewExternal(&StringEvent),
+                                 String::New( (char *)stringVal, stringLen ) };
+        self->Emit( 2, args );
 
         return 1;
     }
@@ -360,7 +370,8 @@ namespace yajljs
         if( !self->on_startMap_count )
             return 1;
 */
-        self->Emit( String::NewExternal(&StartMapEvent), 0, NULL );
+        Local<Value> args[1] = { String::NewExternal(&StartMapEvent) };
+        self->Emit( 1, args );
 
         return 1;
     }
@@ -372,8 +383,9 @@ namespace yajljs
         if( !self->on_mapKey_count )
             return 1;
 */
-        Local<Value> args[1] = { String::New( (char *)key, stringLen ) };
-        self->Emit( String::NewExternal(&MapKeyEvent), 1, args );
+        Local<Value> args[2] = { String::NewExternal(&MapKeyEvent),
+                                 String::New( (char *)key, stringLen ) };
+        self->Emit( 2, args );
 
         return 1;
     }
@@ -385,7 +397,8 @@ namespace yajljs
         if( !self->on_endMap_count )
             return 1;
 */
-        self->Emit( String::NewExternal(&EndMapEvent), 0, NULL );
+        Local<Value> args[1] = { String::NewExternal(&EndMapEvent) };
+        self->Emit( 1, args );
 
         return 1;
     }
@@ -397,7 +410,8 @@ namespace yajljs
         if( !self->on_startArray_count )
             return 1;
 */
-        self->Emit( String::NewExternal(&StartArrayEvent), 0, NULL );
+        Local<Value> args[1] = { String::NewExternal(&StartArrayEvent) };
+        self->Emit( 1, args );
 
         return 1;
     }
@@ -409,7 +423,8 @@ namespace yajljs
         if( !self->on_endArray_count )
             return 1;
 */
-        self->Emit( String::NewExternal(&EndArrayEvent), 0, NULL );
+        Local<Value> args[1] = { String::NewExternal(&EndArrayEvent) };
+        self->Emit( 1, args );
 
         return 1;
     }
@@ -448,4 +463,18 @@ namespace yajljs
         return str;
     }
 
+    /* Event emitting */
+    /* http://permalink.gmane.org/gmane.comp.lang.javascript.nodejs/28298 */
+    /* http://groups.google.com/group/nodejs/browse_thread/thread/53cd7a16a6a39f4b */
+
+    void Handle::Emit(int nargs, v8::Handle<v8::Value> *args)
+    {
+        Local<Value> emit_v = handle_->Get(emit_symbol);
+        Local<Function> emit = Local<Function>::Cast(emit_v);
+        TryCatch tc;
+        emit->Call(handle_, nargs, args);
+        if (tc.HasCaught()) {
+            node::FatalException(tc);
+        }
+    }
 }

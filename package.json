@@ -8,7 +8,7 @@
         "Nikhil Marathe <nsm.nikhil@gmail.com>"
     ],
 
-    "main"      : "./build/default/yajl.node",
+    "main"      : "./yajl.js",
 
     "scripts"   : {
         "install" : "node-waf configure build",
