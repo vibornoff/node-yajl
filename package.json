@@ -11,7 +11,6 @@
     "main"      : "./yajl.js",
 
     "scripts"   : {
-        "install" : "node-waf configure build",
         "test"  : "node ./test.js"
     },
 
