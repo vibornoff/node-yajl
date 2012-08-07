@@ -32,7 +32,7 @@
 
 #include <v8.h>
 #include <node.h>
-#include <node/node_events.h>
+#include <node/node_object_wrap.h>
 #include <yajl/yajl_parse.h>
 
 #include <string>
@@ -40,7 +40,7 @@
 
 namespace yajljs
 {
-    class Handle : public node::EventEmitter
+    class Handle : public node::ObjectWrap
     {
       public:
         static void Initialize( v8::Handle<v8::Object> target );
@@ -122,6 +122,8 @@ namespace yajljs
         static int OnEndArray( void *ctx );
 
         static yajl_callbacks callbacks;
+
+        void Emit(int nargs, v8::Handle<v8::Value> *args);
     };
 }
 

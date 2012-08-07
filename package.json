@@ -2,16 +2,15 @@
     "name"      :   "yajl",
     "version"   :   "0.6.1",
     "description" : "Binding for libyajl",
-    "autor"     :   "Artem S Vybornov <vybornov@gmail.com>",
+    "author"    :   "Artem S Vybornov <vybornov@gmail.com>",
     "contributors" : [
         "Lloyd Hilaiel <lloyd@hilaiel.com>",
         "Nikhil Marathe <nsm.nikhil@gmail.com>"
     ],
 
-    "main"      : "./build/default/yajl.node",
+    "main"      : "./yajl.js",
 
     "scripts"   : {
-        "install" : "node-waf configure build",
         "test"  : "node ./test.js"
     },
 
