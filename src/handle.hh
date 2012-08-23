@@ -48,11 +48,7 @@ namespace yajljs
         static v8::Handle<v8::Value> Parse( const v8::Arguments& args );
         static v8::Handle<v8::Value> Complete( const v8::Arguments& args );
         static v8::Handle<v8::Value> GetBytesConsumed( const v8::Arguments& args );
-/*
-        static v8::Handle<v8::Value> AddListener(const v8::Arguments& args);
-        static v8::Handle<v8::Value> RemoveListener(const v8::Arguments& args);
-        static v8::Handle<v8::Value> RemoveAllListeners(const v8::Arguments& args);
-*/
+
       protected:
         static v8::Handle<v8::Value> New( const v8::Arguments& args );
 
@@ -64,21 +60,7 @@ namespace yajljs
 
       private:
         yajl_handle handle;
-/*
-        std::map<std::string,int*> listener_counters;
 
-        int on_null_count;
-        int on_boolean_count;
-        int on_integer_count;
-        int on_double_count;
-        int on_number_count;
-        int on_string_count;
-        int on_startMap_count;
-        int on_mapKey_count;
-        int on_endMap_count;
-        int on_startArray_count;
-        int on_endArray_count;
-*/
       private:
         class EventName : public v8::String::ExternalAsciiStringResource
         {

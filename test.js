@@ -1,7 +1,5 @@
 // Will be a complete reformatter in javascript similar to the Yajl reformatter
 
-require.paths.unshift( __dirname + '/build/default' );
-
 var yajl = require('yajl'),
     fs  = require('fs');
 

@@ -93,12 +93,7 @@ namespace yajljs
         NODE_SET_PROTOTYPE_METHOD( t, "parse", Parse );
         NODE_SET_PROTOTYPE_METHOD( t, "completeParse", Complete );
         NODE_SET_PROTOTYPE_METHOD( t, "getBytesConsumed", GetBytesConsumed );
-/*
-        NODE_SET_PROTOTYPE_METHOD( t, "on", AddListener );
-        NODE_SET_PROTOTYPE_METHOD( t, "addListener", AddListener );
-        NODE_SET_PROTOTYPE_METHOD( t, "removeListener", RemoveListener );
-        NODE_SET_PROTOTYPE_METHOD( t, "removeAllListener", RemoveAllListeners );
-*/
+
         emit_symbol = NODE_PSYMBOL("emit");
         target->Set( v8::String::NewSymbol( "Handle"), t->GetFunction() );
     }
@@ -128,19 +123,6 @@ namespace yajljs
 
     Handle::Handle( yajl_option opt ) : ObjectWrap()
     {
-/*
-        listener_counters[NullEvent]    = &on_null_count;
-        listener_counters[BooleanEvent] = &on_boolean_count;
-        listener_counters[IntegerEvent] = &on_integer_count;
-        listener_counters[DoubleEvent]  = &on_double_count;
-        listener_counters[NumberEvent]  = &on_number_count;
-        listener_counters[StringEvent]  = &on_string_count;
-        listener_counters[StartMapEvent] = &on_startMap_count;
-        listener_counters[MapKeyEvent]  = &on_mapKey_count;
-        listener_counters[EndMapEvent]  = &on_endMap_count;
-        listener_counters[StartArrayEvent] = &on_startArray_count;
-        listener_counters[EndArrayEvent] = &on_endArray_count;
-*/
         handle = yajl_alloc( &callbacks, NULL, this );
 
         yajl_config( handle, CONFIG_OPT(yajl_allow_comments,opt) );
@@ -200,55 +182,7 @@ namespace yajljs
 
         return Integer::New(b);
     }
-/*
-    v8::Handle<Value> Handle::AddListener( const Arguments& args )
-    {
-        HandleScope scope;
 
-        REQ_STR_ARG(args, 0, event);
-
-        Handle *self = Unwrap<Handle>( args.This() );
-        *((self->listener_counters)[*event])++;
-
-        Local<Value> add_listener = EventEmitter::constructor_template->PrototypeTemplate()
-                                    ->NewInstance()->Get( String::New("addListener") );
-
-        v8::Handle<Value> argv[] = { args[0], args[1] };
-        return add_listener.As<Function>()->Call( args.This(), 2, argv );
-    }
-
-    v8::Handle<Value> Handle::RemoveListener( const Arguments& args )
-    {
-        HandleScope scope;
-
-        REQ_STR_ARG(args, 0, event);
-
-        Handle *self = Unwrap<Handle>( args.This() );
-        *((self->listener_counters)[*event])--;
-
-        Local<Value> rm_listener = EventEmitter::constructor_template->PrototypeTemplate()
-                                    ->NewInstance()->Get( String::New("removeListener") );
-
-        v8::Handle<Value> argv[] = { args[0], args[1] };
-        return rm_listener.As<Function>()->Call( args.This(), 2, argv );
-    }
-
-    v8::Handle<Value> Handle::RemoveAllListeners( const Arguments& args )
-    {
-        HandleScope scope;
-
-        REQ_STR_ARG(args, 0, event);
-
-        Handle *self = Unwrap<Handle>( args.This() );
-        *((self->listener_counters)[*event]) = 0;
-
-        Local<Value> rm_listeners = EventEmitter::constructor_template->PrototypeTemplate()
-                                    ->NewInstance()->Get( String::New("removeAllListeners") );
-
-        v8::Handle<Value> argv[] = { args[0] };
-        return rm_listeners.As<Function>()->Call( args.This(), 1, argv );
-    }
-*/
     int Handle::Parse( const char* str, size_t len )
     {
         int status = yajl_parse( handle, (const unsigned char*)str, len );
@@ -282,10 +216,7 @@ namespace yajljs
     int Handle::OnNull( void *ctx )
     {
         Handle *self = static_cast<Handle *>( ctx );
-/*
-        if( !self->on_null_count )
-            return 1;
-*/
+
         v8::Handle<Value> args[2] = { String::NewExternal(&NullEvent),
                                       Null() };
         self->Emit( 2, args );
@@ -296,10 +227,7 @@ namespace yajljs
     int Handle::OnBoolean( void *ctx, int b )
     {
         Handle *self = static_cast<Handle *>( ctx );
-/*
-        if( !self->on_boolean_count )
-            return 1;
-*/
+
         v8::Handle<Value> args[2] = { String::NewExternal(&BooleanEvent),
                                       b ? True() : False() };
         self->Emit( 2, args );
@@ -310,10 +238,7 @@ namespace yajljs
     int Handle::OnInteger( void *ctx, long long b )
     {
         Handle *self = static_cast<Handle *>( ctx );
-/*
-        if( !self->on_integer_count )
-            return 1;
-*/
+
         Local<Value> args[2] = { String::NewExternal(&IntegerEvent),
                                  Integer::New( b ) };
         self->Emit( 2, args );
@@ -324,10 +249,7 @@ namespace yajljs
     int Handle::OnDouble( void *ctx, double b )
     {
         Handle *self = static_cast<Handle *>( ctx );
-/*
-        if( !self->on_double_count )
-            return 1;
-*/
+
         Local<Value> args[2] = { String::NewExternal(&DoubleEvent),
                                  Number::New( b ) };
         self->Emit( 2, args );
@@ -338,10 +260,7 @@ namespace yajljs
     int Handle::OnNumber( void *ctx, const char *numberVal, size_t numberLen )
     {
         Handle *self = static_cast<Handle *>( ctx );
-/*
-        if( !self->on_number_count )
-            return 1;
-*/
+
         Local<Value> args[2] = { String::NewExternal(&NumberEvent),
                                  String::New( numberVal, numberLen ) };
         self->Emit( 2, args );
@@ -352,10 +271,7 @@ namespace yajljs
     int Handle::OnString( void *ctx, const unsigned char *stringVal, size_t stringLen )
     {
         Handle *self = static_cast<Handle *>( ctx );
-/*
-        if( !self->on_string_count )
-            return 1;
-*/
+
         Local<Value> args[2] = { String::NewExternal(&StringEvent),
                                  String::New( (char *)stringVal, stringLen ) };
         self->Emit( 2, args );
@@ -366,10 +282,7 @@ namespace yajljs
     int Handle::OnStartMap( void *ctx )
     {
         Handle *self = static_cast<Handle *>( ctx );
-/*
-        if( !self->on_startMap_count )
-            return 1;
-*/
+
         Local<Value> args[1] = { String::NewExternal(&StartMapEvent) };
         self->Emit( 1, args );
 
@@ -379,10 +292,7 @@ namespace yajljs
     int Handle::OnMapKey( void *ctx, const unsigned char *key, size_t stringLen )
     {
         Handle *self = static_cast<Handle *>( ctx );
-/*
-        if( !self->on_mapKey_count )
-            return 1;
-*/
+
         Local<Value> args[2] = { String::NewExternal(&MapKeyEvent),
                                  String::New( (char *)key, stringLen ) };
         self->Emit( 2, args );
@@ -393,10 +303,7 @@ namespace yajljs
     int Handle::OnEndMap( void *ctx )
     {
         Handle *self = static_cast<Handle *>( ctx );
-/*
-        if( !self->on_endMap_count )
-            return 1;
-*/
+
         Local<Value> args[1] = { String::NewExternal(&EndMapEvent) };
         self->Emit( 1, args );
 
@@ -406,10 +313,7 @@ namespace yajljs
     int Handle::OnStartArray( void *ctx )
     {
         Handle *self = static_cast<Handle *>( ctx );
-/*
-        if( !self->on_startArray_count )
-            return 1;
-*/
+
         Local<Value> args[1] = { String::NewExternal(&StartArrayEvent) };
         self->Emit( 1, args );
 
@@ -419,10 +323,7 @@ namespace yajljs
     int Handle::OnEndArray( void *ctx )
     {
         Handle *self = static_cast<Handle *>( ctx );
-/*
-        if( !self->on_endArray_count )
-            return 1;
-*/
+
         Local<Value> args[1] = { String::NewExternal(&EndArrayEvent) };
         self->Emit( 1, args );
 

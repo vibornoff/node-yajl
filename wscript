@@ -17,7 +17,7 @@ def configure(conf):
   
   libyajl = conf.check( header_name='yajl/yajl_version.h' )
   if not libyajl:
-    conf.fatal( "Could not find yajl headers. Make sure libyajl development package is installed." )
+    conf.fatal( "Could not find required yajl headers.\nMake sure libyajl at least of version 2.0 and its development headers are installed." )
 
 def build(bld):
   obj = bld.new_task_gen( 'cxx', 'shlib', 'node_addon' )
