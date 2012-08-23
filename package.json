@@ -5,7 +5,9 @@
     "author"    :   "Artem S Vybornov <vybornov@gmail.com>",
     "contributors" : [
         "Lloyd Hilaiel <lloyd@hilaiel.com>",
-        "Nikhil Marathe <nsm.nikhil@gmail.com>"
+        "Nikhil Marathe <nsm.nikhil@gmail.com>",
+        "Andy Smith <andy@zambezi.org.uk>",
+        "Scott Nelson <scottbnel@gmail.com>"
     ],
 
     "main"      : "./yajl.js",
