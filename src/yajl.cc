@@ -31,7 +31,6 @@
 #include <node.h>
 
 #include "handle.hh"
-#include "tree.hh"
 
 extern "C" {
     void
@@ -39,7 +38,6 @@ extern "C" {
     {
         v8::HandleScope scope;
         yajljs::Handle::Initialize(target);
-        yajljs::Tree::Initialize(target);
     }
 
     NODE_MODULE(yajl, init);

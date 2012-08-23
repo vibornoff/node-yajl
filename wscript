@@ -22,5 +22,5 @@ def configure(conf):
 def build(bld):
   obj = bld.new_task_gen( 'cxx', 'shlib', 'node_addon' )
   obj.target = 'yajl'
-  obj.source = 'src/yajl.cc src/handle.cc src/tree.cc'
+  obj.source = 'src/yajl.cc src/handle.cc'
   obj.lib = 'yajl'

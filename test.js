@@ -24,12 +24,6 @@ console.log("test1.json:");
 
     start_t = (new Date).getTime();
     for ( var i = 0; i < n; i++ )
-        v = new yajl.Tree(s1);
-    end_t = (new Date).getTime();
-    console.log( "YAJL Tree parse: " + n + " string values: " + ( end_t - start_t ) + " ms ( ~" + Math.round( 1000 * n / ( end_t - start_t ) ) + "/s ): " + JSON.stringify(v) );
-
-    start_t = (new Date).getTime();
-    for ( var i = 0; i < n; i++ )
         v = JSON.parse(s1);
     end_t = (new Date).getTime();
     console.log( "JSON parse: " + n + " string values: " + ( end_t - start_t ) + " ms ( ~" + Math.round( 1000 * n / ( end_t - start_t ) ) + "/s )" );
@@ -54,28 +48,7 @@ console.log("test2.json:");
 
     start_t = (new Date).getTime();
     for ( var i = 0; i < n; i++ )
-        v = new yajl.Tree(s2);
-    end_t = (new Date).getTime();
-    console.log( "YAJL Tree parse: " + n + " string values: " + ( end_t - start_t ) + " ms ( ~" + Math.round( 1000 * n / ( end_t - start_t ) ) + "/s )" );
-
-    start_t = (new Date).getTime();
-    for ( var i = 0; i < n; i++ )
         v = JSON.parse(s2);
     end_t = (new Date).getTime();
     console.log( "JSON parse: " + n + " string values: " + ( end_t - start_t ) + " ms ( ~" + Math.round( 1000 * n / ( end_t - start_t ) ) + "/s )" );
-}
-
-var s3 = '["battleEvent",[1303999015862,[["action",["OBJ#15';
-console.log("test3:");
-try {
-    v = new yajl.Tree(s3);
-    v.get();
-}
-catch (err) {
-    if ( err instanceof SyntaxError ) {
-        console.log( "OK: caught SyntaxError when parsing bad data" );
-    }
-    else {
-        throw err;
-    }
 }
