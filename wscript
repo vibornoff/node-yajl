@@ -2,8 +2,8 @@ import Options
 from os import popen, unlink, symlink, getcwd
 from os.path import exists
 
-APPNAME = 'yajl-js'
-VERSION = '0.5.1'
+APPNAME = 'yajl'
+VERSION = '0.8.0'
 
 srcdir = '.'
 blddir = 'build'
@@ -14,9 +14,17 @@ def set_options(opt):
 def configure(conf):
   conf.check_tool('compiler_cxx')
   conf.check_tool('node_addon')
-  
-  libyajl = conf.check( header_name='yajl/yajl_version.h' )
-  if not libyajl:
+
+  conf.check( header_name='yajl/yajl_version.h',
+              define_name='yajl2',
+              execute=True,
+              define_ret=True,
+              fragment='''
+                  #include <yajl/yajl_version.h>
+                  int main (void) { return (YAJL_MAJOR >= 2) ? 0 : 1; }
+              ''' )
+
+  if not conf.env.yajl2:
     conf.fatal( "Could not find required yajl headers.\nMake sure libyajl at least of version 2.0 and its development headers are installed." )
 
 def build(bld):
