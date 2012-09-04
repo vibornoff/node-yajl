@@ -115,19 +115,6 @@ if the entire buffer was consumed or not.
  * 'number'
  * 'string'
 
-### yajl.Tree(string)
-
-`Tree` object constructor.
-
-Parses `string` into an in-memory JSON-tree.
-Throws `SyntaxError` in case when `string` contains bad data.
-
-Resulting object can be retrieved using `get` method.
-
-#### tree.get()
-
-Returns parsed JSON value.
-
 ## License
 
 Modified BSD Lincense.
