@@ -3,7 +3,7 @@ from os import popen, unlink, symlink, getcwd
 from os.path import exists
 
 APPNAME = 'yajl'
-VERSION = '0.8.0'
+VERSION = '0.8.1'
 
 srcdir = '.'
 blddir = 'build'
